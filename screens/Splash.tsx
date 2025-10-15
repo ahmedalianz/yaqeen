@@ -5,43 +5,44 @@ import React, { useCallback, useEffect } from "react";
 import { Image, StyleSheet } from "react-native";
 
 const Splash = ({ onFinish }: { onFinish: () => void }) => {
-  const { fetchLocation, location } = useLocationStore();
+  const { fetchLocation } = useLocationStore();
   const { calculatePrayerTimes, calculateNextPrayerTime } =
     usePrayerTimesStore();
-  const { initialize } = useNotificationStore();
+  const {
+    isInitialized,
+    initialize: initializeNotifications,
+    scheduleDailyNotifications,
+  } = useNotificationStore();
+
   const initializeApp = useCallback(async () => {
     try {
-      await fetchLocation();
+      const location = await fetchLocation();
       if (location) {
-        await calculatePrayerTimes(location);
+        const prayerTimes = await calculatePrayerTimes(location);
         await calculateNextPrayerTime(location);
+        await initializeNotifications();
+        if (isInitialized && prayerTimes && prayerTimes.length > 0)
+          await scheduleDailyNotifications(prayerTimes);
       }
-      const timer = setTimeout(() => {
-        onFinish();
-      }, 2000);
-
-      return () => clearTimeout(timer);
     } catch (error) {
+      await initializeNotifications();
       console.error("Error in splash initialization:", error);
-      const timer = setTimeout(() => {
-        onFinish();
-      }, 2000);
-      return () => clearTimeout(timer);
+    } finally {
+      onFinish();
     }
   }, [
+    isInitialized,
     fetchLocation,
     calculatePrayerTimes,
     calculateNextPrayerTime,
+    scheduleDailyNotifications,
+    initializeNotifications,
     onFinish,
-    location,
   ]);
-  const initNotifications = useCallback(async () => {
-    await initialize();
-  }, [initialize]);
+
   useEffect(() => {
     initializeApp();
-    // initNotifications();
-  }, [initializeApp, initNotifications]);
+  }, [initializeApp]);
 
   return (
     <Image

@@ -150,7 +150,7 @@ export class PrayerTimeService {
     // Find the next prayer in today's prayers
     for (const prayer of prayerTimes) {
       if (prayer.english === "Sunrise") continue;
-
+      prayer.time = new Date(prayer.time);
       const timeDiff = prayer.time.getTime() - now.getTime();
 
       if (timeDiff > 0 && timeDiff < minTimeDiff) {

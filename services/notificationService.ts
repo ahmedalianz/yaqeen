@@ -1,3 +1,6 @@
+import { useLocationStore } from "@/stores/locationStore";
+import { useNotificationStore } from "@/stores/notificationStore";
+import { usePrayerTimesStore } from "@/stores/prayerTimeStore";
 import * as BackgroundFetch from "expo-background-fetch";
 import * as Notifications from "expo-notifications";
 import * as TaskManager from "expo-task-manager";
@@ -5,7 +8,6 @@ import { Platform } from "react-native";
 import { AudioService } from "./audioService";
 import { PrayerTime } from "./prayerTimeServices";
 
-const PRAYER_NOTIFICATION_TASK = "PRAYER_NOTIFICATION_TASK";
 const DAILY_UPDATE_TASK = "DAILY_UPDATE_TASK";
 
 // Configure notification handler
@@ -91,35 +93,25 @@ export class NotificationService {
   }
 
   private setupBackgroundTasks() {
-    // Task for prayer time notifications
-    TaskManager.defineTask(PRAYER_NOTIFICATION_TASK, async () => {
-      try {
-        // This will be called by the background fetch
-        console.log("Prayer notification task running in background");
-        return BackgroundFetch.BackgroundFetchResult.NewData;
-      } catch (error) {
-        console.error("Error in prayer notification task:", error);
-        return BackgroundFetch.BackgroundFetchResult.Failed;
-      }
-    });
-
     // Task for daily prayer time updates
     TaskManager.defineTask(DAILY_UPDATE_TASK, async () => {
       try {
         // Update prayer times for the day
         console.log("Daily prayer time update task running");
+        const location = useLocationStore.getState().location;
+        if (location) {
+          await usePrayerTimesStore.getState().calculatePrayerTimes(location);
+          const prayerTimes = usePrayerTimesStore.getState().prayerTimes;
+          const settings = useNotificationStore.getState();
+          if (prayerTimes && settings.enabled) {
+            await this.schedulePrayerNotifications(prayerTimes, settings);
+          }
+        }
         return BackgroundFetch.BackgroundFetchResult.NewData;
       } catch (error) {
         console.error("Error in daily update task:", error);
         return BackgroundFetch.BackgroundFetchResult.Failed;
       }
-    });
-
-    // Register background tasks
-    BackgroundFetch.registerTaskAsync(PRAYER_NOTIFICATION_TASK, {
-      minimumInterval: 15 * 60, // 15 minutes
-      stopOnTerminate: false,
-      startOnBoot: true,
     });
 
     BackgroundFetch.registerTaskAsync(DAILY_UPDATE_TASK, {

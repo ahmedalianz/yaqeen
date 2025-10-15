@@ -10,7 +10,7 @@ interface LocationState {
   setLocation: (location: LocationData | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  fetchLocation: () => Promise<void>;
+  fetchLocation: () => Promise<LocationData | null>;
   clearLocation: () => void;
 }
 
@@ -36,10 +36,12 @@ export const useLocationStore = create<LocationState>()(
         try {
           const location = await LocationService.getCurrentLocation();
           setLocation(location);
+          return location;
         } catch (error) {
           setError(
             error instanceof Error ? error.message : "Failed to get location"
           );
+          return null;
         } finally {
           setLoading(false);
         }

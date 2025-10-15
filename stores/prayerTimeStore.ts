@@ -18,7 +18,9 @@ interface PrayerTimesState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 
-  calculatePrayerTimes: (location: LocationData) => Promise<void>;
+  calculatePrayerTimes: (
+    location: LocationData
+  ) => Promise<PrayerTime[] | undefined>;
   calculateNextPrayerTime: (location: LocationData) => Promise<void>;
 
   shouldRecalculate: (location: LocationData) => boolean;
@@ -78,13 +80,8 @@ export const usePrayerTimesStore = create<PrayerTimesState>()(
       },
 
       calculatePrayerTimes: async (location: LocationData) => {
-        const {
-          shouldRecalculate,
-          setPrayerTimes,
-          setNextPrayer,
-          setLoading,
-          setError,
-        } = get();
+        const { shouldRecalculate, setPrayerTimes, setLoading, setError } =
+          get();
 
         // Check if we need to recalculate
         if (!shouldRecalculate(location)) {
@@ -102,6 +99,7 @@ export const usePrayerTimesStore = create<PrayerTimesState>()(
           );
 
           setPrayerTimes(times, location);
+          return times;
         } catch (error) {
           setError(
             error instanceof Error
