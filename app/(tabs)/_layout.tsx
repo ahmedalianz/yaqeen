@@ -1,33 +1,72 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import React from "react";
+import { TextStyle } from "react-native";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+  const TabBarIcon = ({ name, focused }: { name: any; focused: boolean }) => (
+    <Ionicons name={name} size={24} color={focused ? "#0369a1" : "#64748b"} />
+  );
+  const tabBarLabelStyle: TextStyle = {
+    fontSize: 12,
+    fontFamily: "Cairo_500Medium",
+    marginTop: -2,
+  };
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarStyle: {
+          height: 60,
+          shadowColor: "#000",
+          shadowOffset: {
+            width: 0,
+            height: 2,
+          },
+          shadowOpacity: 0.25,
+          shadowRadius: 3.84,
+          elevation: 5,
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "الرئيسية",
+          tabBarLabelStyle,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon name={"home"} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="qibla"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "القبلة",
+          tabBarLabelStyle,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon name={"compass"} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="quarn"
+        options={{
+          title: "القرآن",
+          tabBarLabelStyle,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon name={"book"} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "الإعدادات",
+          tabBarLabelStyle,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon name={"settings"} focused={focused} />
+          ),
         }}
       />
     </Tabs>

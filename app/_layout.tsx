@@ -1,24 +1,52 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import Splash from "@/screens/Splash";
+import {
+  Cairo_200ExtraLight,
+  Cairo_300Light,
+  Cairo_400Regular,
+  Cairo_500Medium,
+  Cairo_600SemiBold,
+  Cairo_700Bold,
+  Cairo_800ExtraBold,
+  useFonts,
+} from "@expo-google-fonts/cairo";
+import { SplashScreen, Stack } from "expo-router";
+import { useCallback, useState } from "react";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  SplashScreen.preventAutoHideAsync();
 
+  const [fontsLoaded] = useFonts({
+    Cairo_200ExtraLight,
+    Cairo_300Light,
+    Cairo_400Regular,
+    Cairo_500Medium,
+    Cairo_600SemiBold,
+    Cairo_700Bold,
+    Cairo_800ExtraBold,
+  });
+
+  const [appIsReady, setAppIsReady] = useState(false);
+
+  const onFinishSplash = useCallback(() => {
+    if (fontsLoaded) {
+      setAppIsReady(true);
+    }
+  }, [fontsLoaded]);
+  if (!appIsReady) {
+    return <Splash onFinish={onFinishSplash} />;
+  }
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <RootLayoutNav />
+    </SafeAreaProvider>
   );
 }
+
+const RootLayoutNav = () => {
+  return (
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    </Stack>
+  );
+};

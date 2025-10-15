@@ -1,15 +1,36 @@
 {
   "expo": {
-    "name": "yaqeen2",
-    "slug": "yaqeen2",
+    "name": "Yaqeen",
+    "slug": "yaqeen",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "yaqeen2",
+    "icon": "./assets/images/splash.png",
+    "scheme": "yaqeen",
     "userInterfaceStyle": "automatic",
+    "permissions": [
+      "NOTIFICATIONS",
+      "LOCATION_WHEN_IN_USE",
+      "BACKGROUND_FETCH"
+    ],
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ahmedafify.yaqeen",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location",
+          "fetch",
+          "remote-notification",
+          "audio"
+        ],
+        "NSLocationWhenInUseUsageDescription": "We need your location to calculate accurate prayer times for your area.",
+        "NSLocationAlwaysUsageDescription": "We need your location to send prayer time notifications even when the app is closed."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +40,20 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.ahmedafify.yaqeen",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "WAKE_LOCK",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.USE_EXACT_ALARM"
+      ],
+      "useNextNotificationsApi": true
     },
     "web": {
       "output": "static",
@@ -37,6 +71,31 @@
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/mosque.png",
+          "color": "#d4a574",
+          "sounds": ["./assets/audio/azan.mp3"],
+          "defaultVolume": 0.8
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "يسمح $(PRODUCT_NAME) باستخدام موقعك لحساب أوقات الصلاة بدقة."
+        }
+      ],
+      "expo-av",
+      "expo-font",
+      [
+        "expo-background-fetch",
+        {
+          "minimumInterval": 15,
+          "stopOnTerminate": false,
+          "startOnBoot": true
         }
       ]
     ],
