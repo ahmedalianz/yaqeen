@@ -71,7 +71,7 @@ const getCurrentDates = () => {
 
   return {
     gregorian: {
-      date: now.toISOString().split("T")[0],
+      date: now.toLocaleDateString("en-CA"),
       full: gregorianFullArabic,
       day: gregorianDay,
       month: gregorianMonth + 1,

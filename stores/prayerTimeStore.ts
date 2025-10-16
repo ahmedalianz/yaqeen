@@ -24,7 +24,7 @@ interface PrayerTimesState {
   calculateNextPrayerTime: (location: LocationData) => Promise<void>;
 
   shouldRecalculate: (location: LocationData) => boolean;
-
+  onReachNextPrayerTime: (location: LocationData) => Promise<void>;
   clearPrayerTimes: () => void;
 }
 
@@ -39,7 +39,7 @@ export const usePrayerTimesStore = create<PrayerTimesState>()(
       error: null,
 
       setPrayerTimes: (prayerTimes, location) => {
-        const today = new Date().toISOString().split("T")[0];
+        const today = new Date().toLocaleDateString("en-CA");
         set({
           prayerTimes,
           calculationDate: today,
@@ -56,8 +56,7 @@ export const usePrayerTimesStore = create<PrayerTimesState>()(
 
       shouldRecalculate: (location: LocationData) => {
         const { prayerTimes, calculationDate, calculationLocation } = get();
-        const today = new Date().toISOString().split("T")[0];
-
+        const today = new Date().toLocaleDateString("en-CA");
         // No prayer times calculated yet
         if (!prayerTimes || !calculationDate) return true;
 
@@ -139,7 +138,25 @@ export const usePrayerTimesStore = create<PrayerTimesState>()(
           setLoading(false);
         }
       },
+      onReachNextPrayerTime: async (location: LocationData) => {
+        const { calculateNextPrayerTime, setLoading, setError } = get();
 
+        setLoading(true);
+        setError(null);
+
+        try {
+          calculateNextPrayerTime(location);
+        } catch (error) {
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Failed to calculate prayer times"
+          );
+          console.error("Error calculating prayer times:", error);
+        } finally {
+          setLoading(false);
+        }
+      },
       clearPrayerTimes: () =>
         set({
           prayerTimes: null,

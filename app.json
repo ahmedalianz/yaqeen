@@ -78,7 +78,9 @@
         {
           "icon": "./assets/images/mosque.png",
           "color": "#d4a574",
-          "sounds": ["./assets/audio/azan.mp3"],
+          "sounds": [
+            "./assets/audio/azan.mp3"
+          ],
           "defaultVolume": 0.8
         }
       ],
@@ -97,7 +99,8 @@
           "stopOnTerminate": false,
           "startOnBoot": true
         }
-      ]
+      ],
+      "expo-background-task"
     ],
     "experiments": {
       "typedRoutes": true,

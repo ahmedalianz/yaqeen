@@ -1,10 +1,10 @@
 import { useLocationStore } from "@/stores/locationStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { usePrayerTimesStore } from "@/stores/prayerTimeStore";
-import * as BackgroundFetch from "expo-background-fetch";
+import * as BackgroundTask from "expo-background-task";
 import * as Notifications from "expo-notifications";
 import * as TaskManager from "expo-task-manager";
-import { Platform } from "react-native";
+import { Alert, Linking, Platform } from "react-native";
 import { AudioService } from "./audioService";
 import { PrayerTime } from "./prayerTimeServices";
 
@@ -69,6 +69,7 @@ export class NotificationService {
         console.log("Notification permissions not granted");
         return false;
       }
+      await this.requestIgnoreBatteryOptimization();
 
       // Configure notification channel for Android
       if (Platform.OS === "android") {
@@ -100,24 +101,34 @@ export class NotificationService {
         console.log("Daily prayer time update task running");
         const location = useLocationStore.getState().location;
         if (location) {
+          const settings = useNotificationStore.getState();
+          const lastScheduledDate = settings.lastScheduledDate;
+          const today = new Date().toLocaleDateString("en-CA");
+          console.log("🔍 Date Comparison Debug:", {
+            lastScheduledDate,
+            today,
+            areEqual: lastScheduledDate === today,
+            typeLast: typeof lastScheduledDate,
+            typeToday: typeof today,
+          });
+          if (lastScheduledDate === today) {
+            return BackgroundTask.BackgroundTaskResult.Success;
+          }
           await usePrayerTimesStore.getState().calculatePrayerTimes(location);
           const prayerTimes = usePrayerTimesStore.getState().prayerTimes;
-          const settings = useNotificationStore.getState();
           if (prayerTimes && settings.enabled) {
             await this.schedulePrayerNotifications(prayerTimes, settings);
           }
         }
-        return BackgroundFetch.BackgroundFetchResult.NewData;
+        return BackgroundTask.BackgroundTaskResult.Success;
       } catch (error) {
         console.error("Error in daily update task:", error);
-        return BackgroundFetch.BackgroundFetchResult.Failed;
+        return BackgroundTask.BackgroundTaskResult.Failed;
       }
     });
 
-    BackgroundFetch.registerTaskAsync(DAILY_UPDATE_TASK, {
-      minimumInterval: 24 * 60 * 60, // 24 hours
-      stopOnTerminate: false,
-      startOnBoot: true,
+    BackgroundTask.registerTaskAsync(DAILY_UPDATE_TASK, {
+      minimumInterval: 2 * 60, // 24 hours
     });
   }
 
@@ -142,8 +153,8 @@ export class NotificationService {
         if (settings.notifyAtPrayerTime) {
           const prayerTimeNotification = this.scheduleNotification(
             prayer.time,
-            `🕌 وقت ${prayer.name}`,
-            `حان الآن وقت صلاة ${prayer.name}`,
+            `🕌 موعد ${prayer.name}`,
+            `حان الآن موعد صلاة ${prayer.name}`,
             settings.azanSoundEnabled,
             `prayer_${prayer.english}_exact`
           );
@@ -161,8 +172,8 @@ export class NotificationService {
           if (beforePrayerTime > new Date()) {
             const beforePrayerNotification = this.scheduleNotification(
               beforePrayerTime,
-              `🕌 اقتراب وقت ${prayer.name}`,
-              `سيحين وقت صلاة ${prayer.name} بعد ${this.getArabicMinutes(
+              `🕌 اقتراب موعد ${prayer.name}`,
+              `سيحين موعد صلاة ${prayer.name} بعد ${this.getArabicMinutes(
                 settings.prePrayerMinutes
               )}`,
               false,
@@ -270,13 +281,79 @@ export class NotificationService {
   async stopAzan(): Promise<void> {
     await this.audioService.stopAzan();
   }
+  async checkBackgroundTaskStatus(): Promise<void> {
+    try {
+      const tasks = await TaskManager.getRegisteredTasksAsync();
+      const dailyTask = tasks.find(
+        (task) => task.taskName === DAILY_UPDATE_TASK
+      );
 
+      if (dailyTask) {
+        console.log("✅ Background task is registered:", dailyTask);
+      } else {
+        console.log("❌ Background task is NOT registered");
+      }
+
+      // Check background fetch status
+      const status = await BackgroundTask.getStatusAsync();
+      console.log("Background fetch status:", status);
+
+      // Get pending notifications to verify scheduling
+      const pending = await this.getPendingNotifications();
+      console.log(`Pending notifications: ${pending.length}`);
+    } catch (error) {
+      console.error("Error checking background task status:", error);
+    }
+  }
+  private async requestIgnoreBatteryOptimization() {
+    if (Platform.OS === "android") {
+      try {
+        const batteryOptimizationEnabled =
+          await BackgroundTask.getStatusAsync();
+        console.log("Battery optimization status:", batteryOptimizationEnabled);
+
+        if (
+          batteryOptimizationEnabled ===
+          BackgroundTask.BackgroundTaskStatus.Restricted
+        ) {
+          // Guide user to disable battery optimization
+          Alert.alert(
+            "Background Access Required",
+            "For reliable prayer time notifications, this app needs to run in the background. Please disable battery optimization for this app.",
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Open Settings",
+                onPress: () => this.openBatterySettings(),
+              },
+            ]
+          );
+        }
+      } catch (error) {
+        console.error("Error checking battery optimization:", error);
+      }
+    }
+  }
   async getPendingNotifications(): Promise<
     Notifications.NotificationRequest[]
   > {
     return await Notifications.getAllScheduledNotificationsAsync();
   }
-
+  private async openBatterySettings() {
+    if (Platform.OS === "android") {
+      try {
+        // Try to open battery optimization settings
+        await Linking.openSettings();
+      } catch (error) {
+        console.error("Error opening settings:", error);
+        // Fallback: show instructions
+        Alert.alert(
+          "Manual Settings Required",
+          "Please go to: Settings → Apps → This App → Battery → Disable optimization\n\nThen return to the app."
+        );
+      }
+    }
+  }
   private getArabicMinutes(minutes: number): string {
     const arabicNumbers = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
     const minutesStr = minutes.toString();

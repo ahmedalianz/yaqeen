@@ -48,7 +48,7 @@ export const useNotificationStore = create<NotificationState>()(
         prayerTimes: PrayerTime[]
       ): Promise<void> => {
         const settings = get();
-        const today = new Date().toISOString().split("T")[0];
+        const today = new Date().toLocaleDateString("en-CA");
 
         // Only schedule if not already scheduled today and notifications are enabled
         if (!settings.enabled || settings.lastScheduledDate === today) {
