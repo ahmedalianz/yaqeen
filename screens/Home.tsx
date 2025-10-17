@@ -5,12 +5,10 @@ import {
   PrayerTimeCard,
 } from "@/components/home";
 import { useLocationStore } from "@/stores/locationStore";
-import { useNotificationStore } from "@/stores/notificationStore";
 import { usePrayerTimesStore } from "@/stores/prayerTimeStore";
 import calculateTimeRemaining from "@/utils/calculateTimeRemaining";
 import getCurrentDates from "@/utils/getCurrentDates";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -24,10 +22,8 @@ import {
   Vibration,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function App() {
-  const router = useRouter();
   const { gregorian, hijri, time } = getCurrentDates();
 
   const {
@@ -49,14 +45,7 @@ export default function App() {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const moonAnim = useRef(new Animated.Value(0)).current;
 
-  const { top } = useSafeAreaInsets();
-  const {
-    location,
-    isLoading: locationLoading,
-    fetchLocation,
-  } = useLocationStore();
-  const { lastScheduledDate } = useNotificationStore();
-  console.log({ lastScheduledDate });
+  const { location, fetchLocation } = useLocationStore();
   const handleRefreshLocation = async () => {
     await fetchLocation();
   };

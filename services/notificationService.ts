@@ -1,6 +1,3 @@
-import { useLocationStore } from "@/stores/locationStore";
-import { useNotificationStore } from "@/stores/notificationStore";
-import { usePrayerTimesStore } from "@/stores/prayerTimeStore";
 import * as BackgroundTask from "expo-background-task";
 import * as Notifications from "expo-notifications";
 import * as TaskManager from "expo-task-manager";
@@ -69,7 +66,7 @@ export class NotificationService {
         console.log("Notification permissions not granted");
         return false;
       }
-      await this.requestIgnoreBatteryOptimization();
+      // await this.requestIgnoreBatteryOptimization();
 
       // Configure notification channel for Android
       if (Platform.OS === "android") {
@@ -82,54 +79,12 @@ export class NotificationService {
         });
       }
 
-      // Setup background tasks
-      this.setupBackgroundTasks();
-
       this.isInitialized = true;
       return true;
     } catch (error) {
       console.error("Error initializing notification service:", error);
       return false;
     }
-  }
-
-  private setupBackgroundTasks() {
-    // Task for daily prayer time updates
-    TaskManager.defineTask(DAILY_UPDATE_TASK, async () => {
-      try {
-        // Update prayer times for the day
-        console.log("Daily prayer time update task running");
-        const location = useLocationStore.getState().location;
-        if (location) {
-          const settings = useNotificationStore.getState();
-          const lastScheduledDate = settings.lastScheduledDate;
-          const today = new Date().toLocaleDateString("en-CA");
-          console.log("🔍 Date Comparison Debug:", {
-            lastScheduledDate,
-            today,
-            areEqual: lastScheduledDate === today,
-            typeLast: typeof lastScheduledDate,
-            typeToday: typeof today,
-          });
-          if (lastScheduledDate === today) {
-            return BackgroundTask.BackgroundTaskResult.Success;
-          }
-          await usePrayerTimesStore.getState().calculatePrayerTimes(location);
-          const prayerTimes = usePrayerTimesStore.getState().prayerTimes;
-          if (prayerTimes && settings.enabled) {
-            await this.schedulePrayerNotifications(prayerTimes, settings);
-          }
-        }
-        return BackgroundTask.BackgroundTaskResult.Success;
-      } catch (error) {
-        console.error("Error in daily update task:", error);
-        return BackgroundTask.BackgroundTaskResult.Failed;
-      }
-    });
-
-    BackgroundTask.registerTaskAsync(DAILY_UPDATE_TASK, {
-      minimumInterval: 2 * 60, // 24 hours
-    });
   }
 
   async schedulePrayerNotifications(
@@ -153,7 +108,7 @@ export class NotificationService {
         if (settings.notifyAtPrayerTime) {
           const prayerTimeNotification = this.scheduleNotification(
             prayer.time,
-            `🕌 موعد ${prayer.name}`,
+            `🕌 صلاة ${prayer.name}`,
             `حان الآن موعد صلاة ${prayer.name}`,
             settings.azanSoundEnabled,
             `prayer_${prayer.english}_exact`

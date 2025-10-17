@@ -51,7 +51,13 @@
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE",
         "android.permission.SCHEDULE_EXACT_ALARM",
-        "android.permission.USE_EXACT_ALARM"
+        "android.permission.USE_EXACT_ALARM",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK"
       ],
       "useNextNotificationsApi": true
     },
@@ -78,9 +84,7 @@
         {
           "icon": "./assets/images/mosque.png",
           "color": "#d4a574",
-          "sounds": [
-            "./assets/audio/azan.mp3"
-          ],
+          "sounds": ["./assets/audio/azan.mp3"],
           "defaultVolume": 0.8
         }
       ],
@@ -92,19 +96,17 @@
       ],
       "expo-av",
       "expo-font",
-      [
-        "expo-background-fetch",
-        {
-          "minimumInterval": 15,
-          "stopOnTerminate": false,
-          "startOnBoot": true
-        }
-      ],
       "expo-background-task"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d0f7c47d-be4e-48d2-8de3-41d14f4cea8e"
+      }
     }
   }
 }
