@@ -4,7 +4,13 @@ import { useLocationStore } from "@/stores/locationStore";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import LottieView from "lottie-react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Animated,
   Dimensions,
@@ -24,7 +30,6 @@ const COMPASS_SIZE = Math.min(width, height) * 0.8;
 export default function Qibla() {
   const { location } = useLocationStore();
   const insets = useSafeAreaInsets();
-
   const [compassData, setCompassData] = useState<CompassData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +44,56 @@ export default function Qibla() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const kaabaPulseAnim = useRef(new Animated.Value(1)).current;
+  // Kaaba pulse animation
+  const startKaabaPulse = useCallback(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(kaabaPulseAnim, {
+          toValue: 1.1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(kaabaPulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [kaabaPulseAnim]);
 
+  // Handle compass updates with smooth animations
+  const handleCompassUpdate = useCallback(
+    (data: CompassData) => {
+      setCompassData(data);
+
+      // Update alignment status based on accuracy
+      if (data.accuracy > 80) {
+        setAlignmentStatus("aligned");
+      } else if (data.accuracy > 60) {
+        setAlignmentStatus("needs_alignment");
+      } else {
+        setAlignmentStatus("calibrating");
+      }
+
+      // Smooth compass rotation
+      Animated.timing(compassRotation, {
+        toValue: data.angle,
+        duration: 200,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+
+      // Smooth qibla indicator rotation
+      Animated.timing(qiblaRotation, {
+        toValue: data.qiblaAngle,
+        duration: 200,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    },
+    [compassRotation, qiblaRotation]
+  );
   // Initialize compass
   useEffect(() => {
     const initCompass = async () => {
@@ -82,55 +136,7 @@ export default function Qibla() {
     return () => {
       compassService.current.stopCompass();
     };
-  }, [location]);
-
-  // Kaaba pulse animation
-  const startKaabaPulse = () => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(kaabaPulseAnim, {
-          toValue: 1.1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(kaabaPulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  };
-
-  // Handle compass updates with smooth animations
-  const handleCompassUpdate = (data: CompassData) => {
-    setCompassData(data);
-
-    // Update alignment status based on accuracy
-    if (data.accuracy > 80) {
-      setAlignmentStatus("aligned");
-    } else if (data.accuracy > 60) {
-      setAlignmentStatus("needs_alignment");
-    } else {
-      setAlignmentStatus("calibrating");
-    }
-
-    // Smooth compass rotation
-    Animated.timing(compassRotation, {
-      toValue: data.angle,
-      duration: 200,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-
-    // Smooth qibla indicator rotation
-    Animated.timing(qiblaRotation, {
-      toValue: data.qiblaAngle,
-      duration: 200,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  };
+  }, [fadeAnim, handleCompassUpdate, location, startKaabaPulse]);
 
   // Get guidance message based on angle difference
   const getGuidanceMessage = () => {
@@ -152,8 +158,55 @@ export default function Qibla() {
     }
   };
 
-  // Get alignment status message
-  const getAlignmentMessage = () => {
+  // Calibration animation
+  const startCalibration = useCallback(async () => {
+    try {
+      setIsCalibrating(true);
+      setAlignmentStatus("calibrating");
+      await compassService.current.calibrate();
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+
+      setTimeout(() => {
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+        setIsCalibrating(false);
+        setAlignmentStatus("aligned");
+      }, 3000);
+    } catch (error) {
+      console.log(error);
+    }
+  }, [pulseAnim]);
+
+  const getDistanceText = useCallback(() => {
+    if (!location) return "--";
+    const distance = QiblaService.calculateDistance(location);
+    return `${Math.round(distance)} كم`;
+  }, [location]);
+
+  const accuracyColor = useMemo(() => {
+    const accuracy = compassData?.accuracy || 0;
+    if (accuracy > 80) return "#10b981";
+    if (accuracy > 60) return "#f59e0b";
+    return "#ef4444";
+  }, [compassData?.accuracy]);
+
+  const alignmentInfo = useMemo(() => {
     switch (alignmentStatus) {
       case "aligned":
         return { text: "✅ الجهاز مضبوط", color: "#10b981" };
@@ -164,50 +217,7 @@ export default function Qibla() {
       default:
         return { text: "جاري التحديد...", color: "#6b7280" };
     }
-  };
-
-  // Calibration animation
-  const startCalibration = () => {
-    setIsCalibrating(true);
-    setAlignmentStatus("calibrating");
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.2,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-
-    setTimeout(() => {
-      Animated.timing(pulseAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-      setIsCalibrating(false);
-      setAlignmentStatus("aligned");
-    }, 3000);
-  };
-
-  const getDistanceText = () => {
-    if (!location) return "--";
-    const distance = QiblaService.calculateDistance(location);
-    return `${Math.round(distance)} كم`;
-  };
-
-  const getAccuracyColor = (accuracy: number) => {
-    if (accuracy > 80) return "#10b981";
-    if (accuracy > 60) return "#f59e0b";
-    return "#ef4444";
-  };
+  }, [alignmentStatus]);
 
   if (isLoading) {
     return (
@@ -245,8 +255,6 @@ export default function Qibla() {
       </View>
     );
   }
-
-  const alignmentInfo = getAlignmentMessage();
 
   return (
     <ScrollView
@@ -406,10 +414,7 @@ export default function Qibla() {
               <View style={styles.infoText}>
                 <Text style={styles.infoLabel}>دقة البوصلة</Text>
                 <Text
-                  style={[
-                    styles.infoValue,
-                    { color: getAccuracyColor(compassData?.accuracy || 0) },
-                  ]}
+                  style={[styles.infoValue, { color: accuracyColor }]}
                   numberOfLines={1}
                 >
                   {compassData ? Math.round(compassData.accuracy) : "--"}%

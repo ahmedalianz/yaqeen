@@ -1,3 +1,4 @@
+import toArabicNumerals from "@/utils/toArabicNumerals";
 import { CalculationMethod, Coordinates, PrayerTimes } from "adhan";
 
 export interface PrayerTime {
@@ -204,22 +205,17 @@ export class PrayerTimeService {
   }
 
   private formatTime(date: Date): string {
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-
-    // Convert to Arabic numerals
-    const arabicHours = this.toArabicNumerals(
-      hours.toString().padStart(2, "0")
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    const ampm = hours >= 12 ? "م" : "ص";
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const currentTime = toArabicNumerals(
+      `${minutes.toString().padStart(2, "0")} : ${hours
+        .toString()
+        .padStart(2, "0")} ${ampm}`
     );
-    const arabicMinutes = this.toArabicNumerals(
-      minutes.toString().padStart(2, "0")
-    );
 
-    return `${arabicHours}:${arabicMinutes}`;
-  }
-
-  private toArabicNumerals(str: string): string {
-    const arabicNumerals = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
-    return str.replace(/\d/g, (digit) => arabicNumerals[parseInt(digit)]);
+    return currentTime;
   }
 }

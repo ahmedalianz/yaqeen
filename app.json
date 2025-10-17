@@ -49,6 +49,7 @@
         "FOREGROUND_SERVICE",
         "WAKE_LOCK",
         "RECEIVE_BOOT_COMPLETED",
+        "HIGH_SAMPLING_RATE_SENSORS ",
         "VIBRATE",
         "android.permission.SCHEDULE_EXACT_ALARM",
         "android.permission.USE_EXACT_ALARM",

@@ -1,5 +1,6 @@
 import { LocationData } from "@/services/locationService";
 import { PrayerTime } from "@/services/prayerTimeServices";
+import getCurrentDates from "@/utils/getCurrentDates";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
@@ -18,9 +19,6 @@ import NextPrayerBanner from "./NextPrayerBanner";
 interface HeaderProps {
   location: LocationData | null;
   isLoading: boolean;
-  gregorian: { full: string };
-  hijri: { full: string };
-  time: string;
   onRefreshLocation: () => void;
   nextPrayer: { prayer: PrayerTime } | null;
   remainingTime: string;
@@ -30,16 +28,13 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({
   location,
   isLoading,
-  gregorian,
-  hijri,
-  time,
   onRefreshLocation,
   nextPrayer,
   remainingTime,
   pulseAnim,
 }) => {
   const { top } = useSafeAreaInsets();
-
+  const { gregorian, hijri, time } = getCurrentDates();
   return (
     <LinearGradient
       colors={["#0a0f1c", "#1a1f2c", "#2d3748"]}

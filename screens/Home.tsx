@@ -19,13 +19,10 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  Vibration,
   View,
 } from "react-native";
 
 export default function App() {
-  const { gregorian, hijri, time } = getCurrentDates();
-
   const {
     prayerTimes,
     nextPrayer,
@@ -174,7 +171,10 @@ export default function App() {
         />
       </Animated.View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <Animated.View
           style={{
@@ -188,12 +188,7 @@ export default function App() {
             pulseAnim={pulseAnim}
             remainingTime={remainingTime}
             nextPrayer={nextPrayer}
-            {...{
-              location,
-              gregorian,
-              hijri,
-              time,
-            }}
+            location={location}
           />
         </Animated.View>
 
@@ -209,16 +204,7 @@ export default function App() {
         >
           {/* Prayer Times Section */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>أوقات الصلاة اليوم</Text>
-              <TouchableOpacity
-                style={styles.viewAllButton}
-                onPress={() => Vibration.vibrate(30)}
-              >
-                <Text style={styles.viewAllText}>التقويم الشهري</Text>
-                <Ionicons name="calendar" size={16} color="#0369a1" />
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.sectionTitle}>أوقات الصلاة اليوم</Text>
 
             <View style={styles.prayerGrid}>
               {prayerTimes?.map((prayer, index) => (
@@ -309,13 +295,8 @@ const styles = StyleSheet.create({
   section: {
     padding: 20,
   },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
   sectionTitle: {
+    marginBottom: 15,
     fontSize: 22,
     color: "#0f172a",
     textAlign: "right",
@@ -323,24 +304,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-  },
-  content: {
-    flex: 1,
-  },
-
-  viewAllButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "#e0f2fe",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  viewAllText: {
-    color: "#0369a1",
-    fontSize: 13,
-    fontFamily: "Cairo_600SemiBold",
   },
   prayerGrid: {
     gap: 12,

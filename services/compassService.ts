@@ -29,7 +29,7 @@ export class CompassService {
       }
 
       // Set update interval
-      Magnetometer.setUpdateInterval(200);
+      Magnetometer.setUpdateInterval(100);
 
       return true;
     } catch (error) {
